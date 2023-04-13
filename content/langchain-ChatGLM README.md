@@ -31,13 +31,9 @@
 
 **[2023/04/11]** 
 1. 加入 Web UI V0.1 版本（感谢 [@liangtongt](https://github.com/liangtongt)）；
-2. `README.md`中增加常见问题（感谢 [@calcitem](https://github.com/calcitem) 和 [@bolongliu](https://github.com/bolongliu)）；
+2. `README.md`中增加常见问题（感谢 [@calcitem](https://github.com/calcitem)）；
 3. 增加 LLM 和 Embedding 模型运行设备是否可用`cuda`、`mps`、`cpu`的自动判断。
 4. 在`knowledge_based_chatglm.py`中增加对`filepath`的判断，在之前支持单个文件导入的基础上，现支持单个文件夹路径作为输入，输入后将会遍历文件夹中各个文件，并在命令行中显示每个文件是否成功加载。
-
-**[2023/04/12]**
-1. 替换 Web UI 中的样例文件，避免出现 Ubuntu 中出现因文件编码无法读取的问题；
-2. 替换`knowledge_based_chatglm.py`中的 prompt 模版，避免出现因 prompt 模版包含中英双语导致 chatglm 返回内容错乱的问题。
 
 ## 使用方式
 
@@ -83,33 +79,29 @@ python knowledge_based_chatglm.py
 
 
 ### 常见问题
-Q1: 本项目支持哪些文件格式？
+Q: 本项目支持哪些文件格式？
 
-A1: 目前已测试支持 txt、docx、md 格式文件，更多文件格式请参考 [langchain 文档](https://python.langchain.com/en/latest/modules/indexes/document_loaders/examples/unstructured_file.html)。目前已知文档中若含有特殊字符，可能存在文件无法加载的问题。
+A: 目前已测试支持 txt、docx、md 格式文件，更多文件格式请参考 [langchain 文档](https://python.langchain.com/en/latest/modules/indexes/document_loaders/examples/unstructured_file.html)。目前已知文档中若含有特殊字符，可能存在文件无法加载的问题。
 
-Q2: 读取特定格式文件时遇到缺少`detectron2`时如何解决？
+Q: 读取特定格式文件时遇到缺少`detectron2`时如何解决？
 
-A2: 因该包安装过程中遇到问题较多，且仅部分格式文件需要，所以未加入`requirements.txt`。可以通过一下命令安装
+A: 因该包安装过程中遇到问题较多，且仅部分格式文件需要，所以未加入`requirements.txt`。可以通过一下命令安装
 
 ```commandline
 pip install "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.6#egg=detectron2"
 ```
 
-Q3: `Resource punkt not found.` 如何解决？
+Q: `Resource punkt not found.` 如何解决？
 
-A3: https://github.com/nltk/nltk_data/raw/gh-pages/packages/tokenizers/punkt.zip 中的 `packages/tokenizers` 解压，放到  `nltk_data/tokenizers` 存储路径下。
+A: https://github.com/nltk/nltk_data/raw/gh-pages/packages/tokenizers/punkt.zip 中的 `packages/tokenizers` 解压，放到  `Searched in:` 对应目录下。
 
- `nltk_data` 存储路径可以通过 `nltk.data.path` 查询。
+Q: `Resource averaged_perceptron_tagger not found.` 如何解决？
 
-Q4: `Resource averaged_perceptron_tagger not found.` 如何解决？
+A: 将 https://github.com/nltk/nltk_data/blob/gh-pages/packages/taggers/averaged_perceptron_tagger.zip 下载，解压放到 `Searched in:` 对应目录下。
 
-A4: 将 https://github.com/nltk/nltk_data/blob/gh-pages/packages/taggers/averaged_perceptron_tagger.zip 下载，解压放到 `nltk_data/taggers` 存储路径下。
+Q: 本项目可否在 colab 中运行？
 
- `nltk_data` 存储路径可以通过 `nltk.data.path` 查询。
-
-Q5: 本项目可否在 colab 中运行？
-
-A5: 可以尝试使用 chatglm-6b-int4 模型在 colab 中运行，需要注意的是，如需在 colab 中运行 Web UI，需将`webui.py`中`demo.queue(concurrency_count=3).launch(
+A: 可以尝试使用 chatglm-6b-int4 模型在 colab 中运行，需要注意的是，如需在 colab 中运行 Web UI，需将`webui.py`中`demo.queue(concurrency_count=3).launch(
     server_name='0.0.0.0', share=False, inbrowser=False)`中参数`share`设置为`True`。
 ## DEMO
 
@@ -144,20 +136,14 @@ A5: 可以尝试使用 chatglm-6b-int4 模型在 colab 中运行，需要注意�
 ## 路线图
 - [x] 实现 langchain + ChatGLM-6B 本地知识应用
 - [x] 基于 langchain 实现非结构化文件接入
-  - [x] .md
-  - [x] .pdf(需要按照常见问题 Q2 中描述进行`detectron2`的安装)
-  - [x] .docx
-  - [x] .txt
-- [ ] 增加更多 LLM 模型支持
-  - [x] THUDM/chatglm-6b
-  - [x] THUDM/chatglm-6b-int4
-  - [x] THUDM/chatglm-6b-int4-qe
+- [ ] 基于 langchain 实现更多类型本地知识文件接入
 - [ ] 增加 Web UI DEMO
   - [x] 利用 gradio 实现 Web UI DEMO
   - [ ] 添加模型加载进度条
   - [ ] 添加输出内容及错误提示
   - [ ] 国际化语言切换
   - [ ] 引用标注
+  - [ ] 添加插件系统（可基础lora训练等）
 - [ ] 利用 fastapi 实现 API 部署方式，并实现调用 API 的 web ui DEMO
 
 ## 项目交流群

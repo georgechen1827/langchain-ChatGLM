@@ -8,8 +8,6 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
-from chatglm_llm import model,tokenizer
-
 Embedding_prefix = "./adapter_model.bin"
 
 embedding_tokenizer = AutoTokenizer.from_pretrained(
@@ -100,34 +98,37 @@ def peft_forward(
     past_key_values = self.get_prompt(batch_size)
     return embedding_forward(self.base_model,input_ids=input_ids, past_key_values=past_key_values, **kwargs) # self.base_model(input_ids=input_ids, past_key_values=past_key_values, **kwargs)
 
-model = model.eval()
-
-# setup peft
-peft_config = PrefixTuningConfig(
-    task_type=TaskType.CAUSAL_LM,
-    num_virtual_tokens=8,
-    prefix_projection=False
-)
-
-base_model_prepare_inputs_for_generation = model.prepare_inputs_for_generation
-
-embedding_model = get_peft_model(model, peft_config).half().cuda()
-
-model.prepare_inputs_for_generation = base_model_prepare_inputs_for_generation
-embedding_model.forward = MethodType(peft_forward,embedding_model)
-
-embedding_model.load_state_dict(torch.load(Embedding_prefix),strict=False)
-
 class ChatGLM_Embedding(Embeddings):
     max_length = 1024
     batch_size = 2
 
+    def __init__(self,chatglmModel,chatglmTokenizer=embedding_tokenizer):
+        chatglmModel = chatglmModel.eval()
+
+        # setup peft
+        peft_config = PrefixTuningConfig(
+            task_type=TaskType.CAUSAL_LM,
+            num_virtual_tokens=8,
+            prefix_projection=False
+        )
+
+        self.embedding_tokenizer = chatglmTokenizer
+
+        base_model_prepare_inputs_for_generation = chatglmModel.prepare_inputs_for_generation
+
+        self.embedding_model = get_peft_model(chatglmModel, peft_config).half().cuda()
+
+        chatglmModel.prepare_inputs_for_generation = base_model_prepare_inputs_for_generation
+        self.embedding_model.forward = MethodType(peft_forward, self.embedding_model)
+
+        self.embedding_model.load_state_dict(torch.load(Embedding_prefix), strict=False)
+
     def embed_query(self, text: str) -> List[float]:
         tokenized = \
-        embedding_tokenizer([text + '[MASK]'], return_tensors="pt", padding='max_length', truncation='longest_first', max_length=self.max_length)[
-            'input_ids'].to(embedding_model.device)
+        self.embedding_tokenizer([text + '[MASK]'], return_tensors="pt", padding='max_length', truncation='longest_first', max_length=self.max_length)[
+            'input_ids'].to(self.embedding_model.device)
         with torch.no_grad():
-            outputs = embedding_model(tokenized)
+            outputs = self.embedding_model(tokenized)
         return outputs[0].tolist()
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
@@ -138,7 +139,7 @@ class ChatGLM_Embedding(Embeddings):
         return embeddings
 
     def _embed_documents(self, texts: List[str]) -> List[List[float]]:
-        tokenized = embedding_tokenizer([text + '[MASK]' for text in texts], return_tensors="pt",padding='max_length', truncation='longest_first', max_length=self.max_length)['input_ids'].to(embedding_model.device)
+        tokenized = self.embedding_tokenizer([text + '[MASK]' for text in texts], return_tensors="pt",padding='max_length', truncation='longest_first', max_length=self.max_length)['input_ids'].to(self.embedding_model.device)
         with torch.no_grad():
-            outputs = embedding_model(tokenized)
+            outputs = self.embedding_model(tokenized)
         return outputs.tolist()
