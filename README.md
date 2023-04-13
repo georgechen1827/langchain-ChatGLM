@@ -14,8 +14,15 @@
 
 **[2023/04/07]** 
 1. 解决加载 ChatGLM 模型时发生显存占用为双倍的问题 (感谢 [@suc16](https://github.com/suc16) 和 [@myml](https://github.com/myml)) ；
-2. 新增清理显存机制。
+2. 新增清理显存机制；
 3. 新增`nghuyong/ernie-3.0-nano-zh`和`nghuyong/ernie-3.0-base-zh`作为 Embedding 模型备选项，相比`GanymedeNil/text2vec-large-chinese`占用显存资源更少 (感谢 [@lastrei](https://github.com/lastrei))。
+
+**[2023/04/09]**
+1. 使用`langchain`中的`RetrievalQA`替代之前选用的`ChatVectorDBChain`，替换后可以有效减少提问 2-3 次后因显存不足而停止运行的问题；
+2. 在`knowledge_based_chatglm.py`中增加`EMBEDDING_MODEL`、`VECTOR_SEARCH_TOP_K`、`LLM_MODEL`、`LLM_HISTORY_LEN`、`REPLY_WITH_SOURCE`参数值设置；
+3. 增加 GPU 显存需求更小的`chatglm-6b-int4`、`chatglm-6b-int4-qe`作为 LLM 模型备选项；
+4. 更正`README.md`中的代码错误（感谢 [@calcitem](https://github.com/calcitem)）。
+
 
 ## 使用方式
 
@@ -31,7 +38,8 @@
 - Embedding 模型硬件需求
 
     本项目中默认选用的 Embedding 模型 [GanymedeNil/text2vec-large-chinese](https://huggingface.co/GanymedeNil/text2vec-large-chinese/tree/main) 约占用显存 3GB，也可修改为在 CPU 中运行。
-
+### 软件需求
+本项目已在 python 3.8 环境下完成测试。
 ### 1. 安装 python 依赖包
 ```commandline
 pip install -r requirements.txt
@@ -46,7 +54,18 @@ python knowledge_based_chatglm.py
 - 目前已测试支持 txt、docx、md 格式文件，更多文件格式请参考 [langchain 文档](https://python.langchain.com/en/latest/modules/indexes/document_loaders/examples/unstructured_file.html)，目前已知文档中若含有特殊字符，可能存在文件无法加载的问题；
 - 使用 macOS 运行本项目时，可能因为 macOS 版本为 13.3 及以上版本导致与 pytorch 不兼容，无法正常运行的情况。
 
+### 常见问题
+
+Q: `Resource punkt not found.` 如何解决？
+
+A: https://github.com/nltk/nltk_data/raw/gh-pages/packages/tokenizers/punkt.zip 中的 `packages/tokenizers` 解压，放到  `Searched in:` 对应目录下。
+
+Q: `Resource averaged_perceptron_tagger not found.` 如何解决？
+
+A: 将 https://github.com/nltk/nltk_data/blob/gh-pages/packages/taggers/averaged_perceptron_tagger.zip 下载，解压放到 `Searched in:` 对应目录下。
+
 ## DEMO
+
 以问题`chatglm-6b 的局限性具体体现在哪里，如何实现改进`为例
 
 未使用 langchain 接入本地文档时：
